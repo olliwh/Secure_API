@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Secure_API.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,6 +10,7 @@ using System.Text;
 
 namespace Secure_API.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class LoginController : ControllerBase
@@ -18,6 +20,7 @@ namespace Secure_API.Controllers
         {
             _configuration = config;   
         }
+        [EnableRateLimiting("fixed")]
         [HttpPost]
         public IActionResult Login([FromBody] UserCredentials data)
         {
