@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Secure_API;
+using Secure_API.Context;
+using Secure_API.Repositories;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -11,8 +14,22 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+var optionsBuilder =
+    new DbContextOptionsBuilder<UserDBContext>();
+optionsBuilder.UseSqlServer(Secrets.connectionString);
+UserDBContext context =
+    new UserDBContext(optionsBuilder.Options);
+
+builder.Services.AddSingleton<IUsersRepository>(
+    new UsersRepository(context));
+builder.Services.AddSingleton<ILoginRepository>(
+    new LoginRepository(context));
+builder.Services.AddSingleton<IAdminRepository>(
+    new AdminRepository(context));
+
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(options =>
 {
     // add JWT Authentication
@@ -22,7 +39,7 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Enter JWT Bearer token **_only_**",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
-        Scheme = "bearer", // must be lower case
+        Scheme = "bearer", 
         BearerFormat = "JWT",
         Reference = new OpenApiReference
         {
@@ -36,23 +53,24 @@ builder.Services.AddSwaggerGen(options =>
         {securityScheme, new string[] { }}
     });
 });
-builder.Services.AddSwaggerGen();
+
 
 var tokenValidationeParameters = new TokenValidationParameters
 {
     ValidateIssuer = true,
-    ValidateAudience = true,
-    //checks appsettings.json for valid issuer and audience
+    ValidateAudience = false,
     ValidAudience = builder.Configuration["Jwt:Audience"],
     ValidIssuer = builder.Configuration["Jwt:Issuer"],
+    ClockSkew = TimeSpan.Zero,
     ValidateLifetime = true,
     ValidateIssuerSigningKey = true,
     IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(Secrets.SekretKey))
 };
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o =>
+builder.Services.AddAuthentication().AddJwtBearer(o =>
 {
     o.TokenValidationParameters = tokenValidationeParameters;
+
 });
 
 builder.Services.AddRateLimiter(options =>
@@ -65,30 +83,15 @@ builder.Services.AddRateLimiter(options =>
             {
                 PermitLimit = 3,
                 Window = TimeSpan.FromMinutes(1),
-                QueueProcessingOrder =QueueProcessingOrder.OldestFirst,
-                QueueLimit = 5
-
-}));
+            }));
 });
-//builder.Services.AddRateLimiter(rateLimiterOptions =>
-//{
-//    rateLimiterOptions.AddFixedWindowLimiter("fixed", options =>
-//    {
-//        options.PermitLimit = 2;
-//        options.Window = TimeSpan.FromMinutes(4);
-//        //options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-//        options.QueueLimit = 5;
-//    });
-//});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 app.UseHttpsRedirection();
 
