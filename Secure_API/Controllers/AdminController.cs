@@ -24,7 +24,8 @@ namespace Secure_API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]//role not allowed
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]//token er udløbet
         public ActionResult<IEnumerable<User>> Get()
         {
             IEnumerable<User>? users = _adminRepository.GetAll();
@@ -39,6 +40,7 @@ namespace Secure_API.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]//token er udløbet
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult<User>? Put(Guid id, [FromBody] string role)
         {
@@ -51,6 +53,7 @@ namespace Secure_API.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]//token er udløbet
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult<User> Delete(Guid id)
         {

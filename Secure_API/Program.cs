@@ -59,7 +59,6 @@ var tokenValidationeParameters = new TokenValidationParameters
 {
     ValidateIssuer = true,
     ValidateAudience = false,
-    ValidAudience = builder.Configuration["Jwt:Audience"],
     ValidIssuer = builder.Configuration["Jwt:Issuer"],
     ClockSkew = TimeSpan.Zero,
     ValidateLifetime = true,

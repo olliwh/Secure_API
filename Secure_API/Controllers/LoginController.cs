@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Secure_API.Models;
 using Secure_API.Repositories;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 
@@ -59,9 +61,11 @@ namespace Secure_API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        //Encoding.UTF8.GetBytes laver string om til bytes
+
         private string CreateToken(User user)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SekretKey"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Secrets.SekretKey));
             var signature = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var claims = new[] {
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),//jwt ID
@@ -73,10 +77,29 @@ namespace Secure_API.Controllers
                 _configuration["Jwt:Issuer"],
                 _configuration["Jwt:Audience"],
                 claims,
-                expires: DateTime.UtcNow.AddMinutes(4),
+                expires: DateTime.UtcNow.AddMinutes(10),
                 signingCredentials: signature);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        [HttpPost]
+        public Task UploadFile(IFormFile file)
+        {
+            return Task.CompletedTask;
+        }
+
+        [HttpGet("img")]
+        public HttpResponseMessage GetImg(string imageUrl)
+        {
+            // Download the image from the specified URL
+            var imageBytes = new WebClient().DownloadData(imageUrl);
+
+            // Return the image bytes as a Stream
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(new MemoryStream(imageBytes))
+            };
         }
     }
 }

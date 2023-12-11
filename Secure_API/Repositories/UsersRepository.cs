@@ -1,7 +1,9 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Secure_API.Context;
 using Secure_API.Models;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Authentication;
 using System.Security.Claims;
 using System.Text;
 
@@ -18,16 +20,39 @@ namespace Secure_API.Repositories
 
         public User? GetById(Guid id)
         {
-            return int.Parse(this.User.Claims.First(i => i.Type == "UserId").Value);    
-            List<User> users = _context.Users.ToList();
-            User? user = users.Find(x => x.UserId == id);
+            User user = _context.Users.FirstOrDefault(x => x.UserId == id);
+            if (user == null) return null;
             return AbstractRepository.UserReturn(user);
         }
 
-        public User Update(User user)
+        public User Update(Guid id, User newData)
         {
-            throw new NotImplementedException();
+            User? user = _context.Users.FirstOrDefault(x => x.UserId == id);
+            if (user == null) return null;
+            user.Username = newData.Username;
+            user.Email = newData.Email;
+            user.CreditCardInformation = newData.CreditCardInformation;
+            user.ImgURL = newData.ImgURL;
+            user.Name = newData.Name;
+            _context.Entry(user).State = EntityState.Modified;
+            _context.SaveChanges();
+            return AbstractRepository.UserReturn(user);
         }
-
+        public User ChangePassword(Guid id, UserCredentials newData)
+        {
+            User? user = _context.Users.FirstOrDefault(x => x.UserId == id);
+            if(user == null) return null;
+            if(user.Password != newData.Password) throw new InvalidCredentialException("Invalid Credentials");
+            if (newData.NewPassword == newData.NewPassword2)
+            {
+                AbstractRepository.ValidatePassword(newData.NewPassword);
+                user.Password = newData.NewPassword;
+                _context.SaveChanges();
+                return AbstractRepository.UserReturn(user);
+            }
+            
+            throw new Exception("New passwords do not match");
+            
+        }
     }
 }

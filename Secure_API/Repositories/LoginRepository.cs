@@ -15,7 +15,7 @@ namespace Secure_API.Repositories
         {
             bool usernameExists = _context.Users.Any(x => x.Username == user.Username);
             if (usernameExists) throw new ArgumentException("Username already exist");
-            user.ValidataPassword();
+            AbstractRepository.ValidatePassword(user.Password);
             user.UserId = new Guid();
             user.Role = "User";
             _context.Users.Add(user);

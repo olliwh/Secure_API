@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Client;
+using Secure_API.Models;
 using Secure_API.Repositories;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Authentication;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -8,7 +13,7 @@ namespace Secure_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "User")]
+    [Authorize(Roles = "User, Admin")]
     public class UsersController : ControllerBase
     {
 
@@ -19,36 +24,91 @@ namespace Secure_API.Controllers
             _usersRepository = usersRepository;
         }
 
-        // GET: api/<UsersController>
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
         // GET api/<UsersController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]//userA prøver på userB
+        public ActionResult<User> Get(Guid id)
         {
-            return "value";
-        }
+            Guid userIdGuid = GetIdFromToken();
+            if (userIdGuid == id)
+            {
+                User? user = _usersRepository.GetById(userIdGuid);
+                if (user == null) return NotFound();
+                return Ok(user);
 
-        // POST api/<UsersController>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
+            }
+            return Forbid();
         }
 
         // PUT api/<UsersController>/5
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]//token er udløbet
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]//userA prøver på userB
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public ActionResult<User> Put(Guid id, [FromBody] User newData)
         {
+            if (GetIdFromToken() == id)
+            {
+                User userToUpdate = _usersRepository.Update(id, newData);
+                if (userToUpdate == null) return NotFound();
+                return Ok(userToUpdate);
+            }
+            return Forbid();
+        }
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]//token er udløbet
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]//userA prøver på userB
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+
+        [HttpPut("{id}/changePassword")]
+        public ActionResult<User> PutPassword(Guid id, [FromBody] UserCredentials newData)
+        {
+
+            try
+            {
+                if (GetIdFromToken() == id)
+                {
+                    User user = _usersRepository.ChangePassword(id, newData);
+                    if (user == null) return NotFound();
+                    return Ok(user);
+                }
+                return Forbid();
+            }
+            catch (InvalidCredentialException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (ArgumentNullException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
         }
 
-        // DELETE api/<UsersController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        private Guid GetIdFromToken()
         {
+            string userId = this.User.Claims.FirstOrDefault(c => c.Type == "UserId").Value;
+            Guid userIdGuid = Guid.Parse(userId);
+            return userIdGuid;
         }
+        
+
     }
 }
