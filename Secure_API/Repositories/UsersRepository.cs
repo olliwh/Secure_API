@@ -50,9 +50,7 @@ namespace Secure_API.Repositories
                 _context.SaveChanges();
                 return AbstractRepository.UserReturn(user);
             }
-            
             throw new Exception("New passwords do not match");
-            
         }
     }
 }

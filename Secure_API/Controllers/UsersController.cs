@@ -38,7 +38,6 @@ namespace Secure_API.Controllers
                 User? user = _usersRepository.GetById(userIdGuid);
                 if (user == null) return NotFound();
                 return Ok(user);
-
             }
             return Forbid();
         }

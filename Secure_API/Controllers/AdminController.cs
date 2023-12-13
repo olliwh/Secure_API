@@ -10,7 +10,6 @@ namespace Secure_API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "Admin")]
-
     public class AdminController : ControllerBase
     {
         private readonly IAdminRepository _adminRepository;

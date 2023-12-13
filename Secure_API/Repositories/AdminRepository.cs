@@ -15,7 +15,7 @@ namespace Secure_API.Repositories
         {
             List<User> users = _context.Users.ToList();
             if (users == null) return null;
-            return users.Select(UserReturn);
+            return users.Select(UserReturnAdmin);
         }
         public User? Delete(Guid id)
         {
@@ -23,7 +23,7 @@ namespace Secure_API.Repositories
             if (userToDelete == null) return null;
             _context.Users.Remove(userToDelete);
             _context.SaveChanges();
-            return UserReturn(userToDelete);
+            return UserReturnAdmin(userToDelete);
         }
         public User? AsignRole(Guid id, string role)
         {
@@ -31,9 +31,9 @@ namespace Secure_API.Repositories
             if (userToUpdate == null) return null;
             userToUpdate.Role = role;
             _context.SaveChanges();
-            return UserReturn(userToUpdate);
+            return UserReturnAdmin(userToUpdate);
         }
-        private User UserReturn(User user)
+        private User UserReturnAdmin(User user)
         {
             return new User
             {
