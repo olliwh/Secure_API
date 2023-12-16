@@ -2,6 +2,7 @@
 using Microsoft.IdentityModel.Tokens;
 using Secure_API.Context;
 using Secure_API.Models;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Authentication;
 using System.Security.Claims;
@@ -41,16 +42,21 @@ namespace Secure_API.Repositories
         public User ChangePassword(Guid id, UserCredentials newData)
         {
             User? user = _context.Users.FirstOrDefault(x => x.UserId == id);
-            if(user == null) return null;
-            if(user.Password != newData.Password) throw new InvalidCredentialException("Invalid Credentials");
-            if (newData.NewPassword == newData.NewPassword2)
+
+            if (user != null)
             {
-                AbstractRepository.ValidatePassword(newData.NewPassword);
-                user.Password = newData.NewPassword;
-                _context.SaveChanges();
-                return AbstractRepository.UserReturn(user);
+                bool correctPass = PasswordHasher.VerifyPassword(newData.Password, user.Password);
+                if (!correctPass) throw new InvalidCredentialException("Invalid Credentials");
+                if (newData.NewPassword == newData.NewPassword2)
+                {
+                    user.Password = AbstractRepository.ValidatePassword(newData.NewPassword);
+                    _context.SaveChanges();
+                    return AbstractRepository.UserReturn(user);
+                }
+                throw new Exception("New passwords do not match");
+
             }
-            throw new Exception("New passwords do not match");
+            return null;
         }
     }
 }

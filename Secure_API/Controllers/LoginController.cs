@@ -29,7 +29,8 @@ namespace Secure_API.Controllers
         }
         [EnableRateLimiting("fixed")]
         [HttpPost("login")]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]//forkert brugernavn eller password
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult Login([FromBody] UserCredentials loginData)
         {
@@ -83,23 +84,6 @@ namespace Secure_API.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        [HttpPost]
-        public Task UploadFile(IFormFile file)
-        {
-            return Task.CompletedTask;
-        }
-
-        [HttpGet("img")]
-        public HttpResponseMessage GetImg(string imageUrl)
-        {
-            // Download the image from the specified URL
-            var imageBytes = new WebClient().DownloadData(imageUrl);
-
-            // Return the image bytes as a Stream
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StreamContent(new MemoryStream(imageBytes))
-            };
-        }
+        
     }
 }

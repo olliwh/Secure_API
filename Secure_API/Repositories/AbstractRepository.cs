@@ -19,7 +19,7 @@ namespace Secure_API.Repositories
             };
         }
 
-        public static void ValidatePassword(string? password)
+        public static string ValidatePassword(string? password)
         {
             if (password == null) throw new ArgumentNullException("password cannot be null");
             if (password.Length < 8) throw new ArgumentOutOfRangeException("password too short");
@@ -32,6 +32,7 @@ namespace Secure_API.Repositories
             if (!hasDigit) throw new ArgumentException("Must contain number");
             bool hasspecialChar = Regex.IsMatch(password, @"[^A-Za-z0-9]");
             if (!hasspecialChar) throw new ArgumentException("Must contain special character");
+            return PasswordHasher.HashPassword(password);
         }
     }
 }

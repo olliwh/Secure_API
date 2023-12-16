@@ -15,7 +15,8 @@ namespace Secure_API.Repositories
         {
             bool usernameExists = _context.Users.Any(x => x.Username == user.Username);
             if (usernameExists) throw new ArgumentException("Username already exist");
-            AbstractRepository.ValidatePassword(user.Password);
+            user.Password = AbstractRepository.ValidatePassword(user.Password);
+            string a = user.Password;
             user.UserId = new Guid();
             user.Role = "User";
             _context.Users.Add(user);
@@ -25,9 +26,12 @@ namespace Secure_API.Repositories
         public User? Login(UserCredentials userCreds)
         {
             List<User> users = _context.Users.ToList();
-
             User? found = users.Find(x => x.Username == userCreds.Username);
-            if (found != null && found.Password == userCreds.Password) return AbstractRepository.UserReturn(found);
+            if (found != null)
+            {
+                bool correctPass = PasswordHasher.VerifyPassword(userCreds.Password, found.Password);
+                if (correctPass) return AbstractRepository.UserReturn(found);
+            }
             return null;
         }
     }
