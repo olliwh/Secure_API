@@ -32,12 +32,9 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
-    // add JWT Authentication
     var securityScheme = new OpenApiSecurityScheme
     {
         Name = "JWT Authentication",
-        Description = "Enter JWT Bearer token **_only_**",
-        In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "bearer", 
         BearerFormat = "JWT",
