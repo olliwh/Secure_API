@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -14,5 +15,16 @@ namespace Secure_API.Models
         public string? ImgURL { get; set; }
         public string? CreditCardInformation { get; set; }
         public string? Role { get; set; }
+        [NotMapped]
+        private List<Link> Links { get; set; }
+        public User()
+        {
+            Links = new List<Link>()
+            {
+                new Link($"api/{UserId}", "self", "GET", Name),
+                new Link($"api/{UserId}", "update", "PUT", Name),
+                new Link($"api/{UserId}/changePassword", "updatePassword", "PUT", Name)
+            };
+        }
     }
 }
